@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .calculator {
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            width: 320px;
+        }
+
+        .display {
+            background-color: #444;
+            color: #fff;
+            font-size: 2.5em;
+            text-align: right;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            height: 60px;
+            box-sizing: border-box;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .button {
+            background-color: #555;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.5em;
+            padding: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .button:hover {
+            background-color: #666;
+        }
+
+        .button:active {
+            background-color: #777;
+        }
+
+        .button.operator {
+            background-color: #ff9500; /* Orange for operators */
+        }
+
+        .button.operator:hover {
+            background-color: #ffa933;
+        }
+        
+        .button.operator:active {
+            background-color: #cc7a00;
+        }
+
+        .button.equals {
+            background-color: #007aff; /* Blue for equals */
+            grid-column: span 2; /* Make equals button wider */
+        }
+        
+        .button.equals:hover {
+            background-color: #3395ff;
+        }
+
+        .button.equals:active {
+            background-color: #005cbf;
+        }
+
+        .button.clear {
+            background-color: #d4d4d2; /* Light gray for clear */
+            color: #333;
+        }
+        .button.clear:hover {
+            background-color: #e0e0e0;
+        }
+        .button.clear:active {
+            background-color: #c0c0c0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="button clear" id="clear">C</button>
+            <button class="button operator" data-operator="/">÷</button>
+            <button class="button operator" data-operator="*">×</button>
+            <button class="button operator" data-operator="-">−</button>
+
+            <button class="button number" data-number="7">7</button>
+            <button class="button number" data-number="8">8</button>
+            <button class="button number" data-number="9">9</button>
+            <button class="button operator" data-operator="+">+</button>
+            
+            <button class="button number" data-number="4">4</button>
+            <button class="button number" data-number="5">5</button>
+            <button class="button number" data-number="6">6</button>
+            
+            <button class="button number" data-number="1">1</button>
+            <button class="button number" data-number="2">2</button>
+            <button class="button number" data-number="3">3</button>
+            <button class="button equals" id="equals">=</button> <!-- Spans two columns automatically due to grid layout -->
+
+            <button class="button number" data-number="0" style="grid-column: span 2;">0</button> <!-- Make 0 wider -->
+            <button class="button number" data-number=".">.</button>
+            
+        </div>
+    </div>
+
+    <script>
+        const displayElement = document.getElementById('display');
+        const numberButtons = document.querySelectorAll('.number');
+        const operatorButtons = document.querySelectorAll('.operator');
+        const equalsButton = document.getElementById('equals');
+        const clearButton = document.getElementById('clear');
+
+        let currentInput = '0';
+        let previousInput = '';
+        let operator = null;
+        let resultDisplayed = false; // Flag to check if the display shows a result
+
+        function updateDisplay() {
+            displayElement.textContent = currentInput;
+            // Optional: Add logic to adjust font size if number is too long
+        }
+
+        function clearAll() {
+            currentInput = '0';
+            previousInput = '';
+            operator = null;
+            resultDisplayed = false;
+            updateDisplay();
+        }
+
+        function appendNumber(number) {
+            if (resultDisplayed) {
+                currentInput = ''; // Start new input after result
+                resultDisplayed = false;
+            }
+            if (currentInput === '0' && number !== '.') {
+                currentInput = number;
+            } else if (number === '.' && currentInput.includes('.')) {
+                return; // Prevent multiple decimal points
+            } else {
+                currentInput += number;
+            }
+            updateDisplay();
+        }
+
+        function chooseOperator(selectedOperator) {
+            if (currentInput === '' && previousInput === '') return; // Nothing to operate on
+
+            if (previousInput !== '' && operator && !resultDisplayed) {
+                // If there's a previous input and an operator, calculate first
+                calculate();
+            }
+            
+            operator = selectedOperator;
+            previousInput = currentInput;
+            currentInput = ''; // Ready for the next number
+            resultDisplayed = false; 
+            // No display update here, wait for next number or equals
+        }
+
+        function calculate() {
+            if (previousInput === '' || currentInput === '' || !operator) {
+                return; // Not enough information to calculate
+            }
+
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+
+            if (isNaN(prev) || isNaN(current)) {
+                clearAll();
+                displayElement.textContent = "Error";
+                return;
+            }
+
+            switch (operator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        clearAll();
+                        displayElement.textContent = "Error"; // Division by zero
+                        return;
+                    }
+                    result = prev / current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentInput = result.toString();
+            operator = null;
+            previousInput = ''; // Reset previousInput for next operation chain
+            resultDisplayed = true;
+            updateDisplay();
+        }
+
+        // Event Listeners
+        numberButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                appendNumber(button.dataset.number);
+            });
+        });
+
+        operatorButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                chooseOperator(button.dataset.operator);
+            });
+        });
+
+        equalsButton.addEventListener('click', calculate);
+        clearButton.addEventListener('click', clearAll);
+
+        // Initial display update
+        updateDisplay();
+    </script>
+
+</body>
+</html>
